@@ -48,7 +48,20 @@ function parseCSVLine(line) {
   return result
 }
 
+function geojsonPlugin() {
+  return {
+    name: 'geojson-loader',
+    transform(code, id) {
+      if (!id.endsWith('.geojson')) return null
+      return {
+        code: `export default ${code}`,
+        map: null,
+      }
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [csvPlugin(), svelte()],
+  plugins: [csvPlugin(), geojsonPlugin(), svelte()],
   base: process.env.NODE_ENV === 'production' ? `/${REPO_NAME}/` : '/',
 })

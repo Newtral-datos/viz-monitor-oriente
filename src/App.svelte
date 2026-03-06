@@ -18,9 +18,9 @@
 
   const TYPE_LABELS_ES = {
     'Battles': 'Combates',
-    'Explosions/Remote violence': 'Explosiones / violencia a distancia',
+    'Explosions/Remote violence': 'Ataques aéreos',
     'Protests': 'Protestas',
-    'Strategic developments': 'Desarrollos estratégicos',
+    'Strategic developments': 'Acciones defensivas',
   };
 
   const TYPE_COLORS = {
@@ -43,15 +43,15 @@
   const ACTOR_LABELS = {
     'eeuu-israel': 'EEUU / Israel',
     'iran': 'Irán',
-    'protestas': 'Manifestantes',
+    'protestas': 'Protestas',
     'otros': 'Otros',
   };
 
   const ACTOR_COLORS = {
     'eeuu-israel': '#01f3b3',
-    'iran': '#305cfa',
-    'protestas': '#a855f7',
-    'otros': '#94a3b8',
+    'iran': '#cf023d',
+    'protestas': '#eaea40',
+    'otros': '#d8d8d8',
   };
 
   function getActorGroup(actor1) {
@@ -70,6 +70,7 @@
 
   // ── Modo de vista ────────────────────────────────────────────────
   let viewMode = 'actor'; // 'category' | 'actor'
+  let onlyFatalities = false;
 
   $: activeColors = viewMode === 'category' ? TYPE_COLORS : ACTOR_COLORS;
   $: colorField   = viewMode === 'category' ? 'event_type' : 'actorGroup';
@@ -146,6 +147,7 @@
   // ── Filtrado ─────────────────────────────────────────────────────
   $: filteredEvents = events.filter(e => {
     if (e.event_date < allDates[dateLo] || e.event_date > allDates[dateHi]) return false;
+    if (onlyFatalities && e.fatalities === 0) return false;
     if (viewMode === 'category') return activeTypes.has(e.event_type);
     return activeActors.has(e.actorGroup);
   });
@@ -187,6 +189,11 @@
           class:active={viewMode === 'category'}
           on:click={() => viewMode = 'category'}
         >Categoría</button>
+        <button
+          class="mode-btn"
+          class:active={onlyFatalities}
+          on:click={() => onlyFatalities = !onlyFatalities}
+        >Eventos con bajas</button>
       </div>
 
       <div class="v-divider"></div>
@@ -276,7 +283,7 @@
         <p class="date">{selectedEvent.event_date}</p>
         {#if selectedEvent.fatalities > 0}
           <div class="fatalities">
-            💀 {selectedEvent.fatalities} {selectedEvent.fatalities === 1 ? 'baja' : 'bajas'}
+            {selectedEvent.fatalities} {selectedEvent.fatalities === 1 ? 'baja' : 'bajas'}
           </div>
         {/if}
         <div class="actors">

@@ -1,5 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
+  import iranGeoJSON from '../data/iran_map.geojson';
 
   export let events = [];
   export let typeColors = {};
@@ -16,14 +17,22 @@
     await import('leaflet/dist/leaflet.css');
 
     map = L.map(mapEl, {
-      center: [30, 45],
-      zoom: 5,
+      center: [30, 52],
+      zoom: 4,
       zoomControl: true,
     });
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap © CARTO',
       maxZoom: 18,
+    }).addTo(map);
+
+    L.geoJSON(iranGeoJSON, {
+      style: {
+        color: 'rgba(255,255,255,0.5)',
+        weight: 1.5,
+        fill: false,
+      },
     }).addTo(map);
 
     markersLayer = L.layerGroup().addTo(map);
