@@ -25,3 +25,4 @@ src/data/
 *.njsproj
 *.sln
 *.sw?
+*.mjs
