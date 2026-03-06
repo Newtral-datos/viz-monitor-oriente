@@ -18,12 +18,16 @@
 
   function onLo(e) {
     const v = parseInt(e.target.value);
-    lo = Math.min(v, hi);
+    const clamped = Math.min(v, hi);
+    lo = clamped;
+    e.target.value = clamped;
   }
 
   function onHi(e) {
     const v = parseInt(e.target.value);
-    hi = Math.max(v, lo);
+    const clamped = Math.max(v, lo);
+    hi = clamped;
+    e.target.value = clamped;
   }
 </script>
 

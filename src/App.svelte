@@ -39,6 +39,7 @@
 
   // ── Actores ─────────────────────────────────────────────────────
   const ACTOR_GROUPS = ['eeuu-israel', 'iran', 'protestas', 'otros'];
+  const ACTOR_GROUPS_DISPLAY = ['eeuu-israel', 'iran', 'otros'];
 
   const ACTOR_LABELS = {
     'eeuu-israel': 'EEUU / Israel',
@@ -48,17 +49,64 @@
   };
 
   const ACTOR_COLORS = {
-    'eeuu-israel': '#01f3b3',
-    'iran': '#cf023d',
-    'protestas': '#eaea40',
-    'otros': '#d8d8d8',
+    'eeuu-israel': '#cf023d',
+    'iran': '#305cfa',
+    'protestas': '#01f3b3',
+    'otros': '#aaaaaa',
   };
 
   function getActorGroup(actor1) {
     if (/United States|Israel|United Kingdom|NATO|Global Coalition/i.test(actor1)) return 'eeuu-israel';
     if (/Iran/i.test(actor1)) return 'iran';
-    if (/Protesters/i.test(actor1)) return 'protestas';
     return 'otros';
+  }
+
+  // ── Nombres de actores en español ───────────────────────────────
+  const ACTOR_NAMES_ES = {
+    'Civilians (Azerbaijan)':                                              'Civiles (Azerbaiyán)',
+    'Civilians (Bangladesh)':                                              'Civiles (Bangladés)',
+    'Civilians (India)':                                                   'Civiles (India)',
+    'Civilians (International)':                                           'Civiles (Internacional)',
+    'Civilians (Iran)':                                                    'Civiles (Irán)',
+    'Civilians (Israel)':                                                  'Civiles (Israel)',
+    'Civilians (Kuwait)':                                                  'Civiles (Kuwait)',
+    'Civilians (Oman)':                                                    'Civiles (Omán)',
+    'Civilians (United Arab Emirates)':                                    'Civiles (Emiratos Árabes Unidos)',
+    'Civilians (United States)':                                           'Civiles (Estados Unidos)',
+    'Global Coalition Against Daesh':                                      'Coalición Global contra Daesh',
+    'KSZK: Komala Party of Iranian Kurdistan':                             'KSZK: Partido Komala del Kurdistán iraní',
+    'Military Forces of Bahrain (1999-)':                                  'Baréin',
+    'Military Forces of France (2017-)':                                   'Francia',
+    'Military Forces of Iran (1989-)':                                     'Irán',
+    'Military Forces of Iran (1989-) 65th Airborne Special Forces':        'Irán — Fuerzas Especiales',
+    'Military Forces of Iran (1989-) Basij Force':                         'Irán — Basij',
+    'Military Forces of Iran (1989-) Islamic Republic of Iran Air Force':  'Irán — Fuerza Aérea',
+    'Military Forces of Iran (1989-) Islamic Revolutionary Guard Corps':   'Irán — CGRI',
+    'Military Forces of Iran (1989-) Islamic Revolutionary Guard Corps Navy (IRGCN)': 'Irán — Marina del CGRI',
+    'Military Forces of Iraq (2022-) Peshmerga':                           'Irak — Peshmerga',
+    'Military Forces of Israel (2022-)':                                   'Israel',
+    'Military Forces of Kuwait (2020-)':                                   'Kuwait',
+    'Military Forces of Oman (2020-)':                                     'Omán',
+    'Military Forces of Qatar (2013-)':                                    'Catar',
+    'Military Forces of Saudi Arabia (2015-)':                             'Arabia Saudí',
+    'Military Forces of the United Arab Emirates (2022-)':                 'Emiratos Árabes Unidos',
+    'Military Forces of the United Kingdom (2024-)':                       'Reino Unido',
+    'Military Forces of the United States (2025-)':                        'Estados Unidos',
+    'MPF: Mobarizoun Popular Front':                                       'MPF: Frente Popular Mobarizoun',
+    'NATO: North Atlantic Treaty Organization':                            'OTAN',
+    'PAK: Kurdistan Freedom Party':                                        'PAK: Partido de la Libertad del Kurdistán',
+    'PFF: People\'s Fighters Front':                                       'PFF: Frente de Combatientes del Pueblo',
+    'Police Forces of Iran (1989-)':                                       'Fuerzas Policiales de Irán',
+    'Police Forces of Iran (1989-) Islamic Republic of Iran Border Guard Command': 'Fuerzas Policiales de Irán — Guardia Fronteriza',
+    'Police Forces of Iran (1989-) Ministry of Intelligence':              'Fuerzas Policiales de Irán — Ministerio de Inteligencia',
+    'Police Forces of Iraq (2022-) Asayish':                               'Fuerzas Policiales de Irak — Asayish',
+    'Protesters (Iran)':                                                   'Manifestantes (Irán)',
+    'Protesters (Iraq)':                                                   'Manifestantes (Irak)',
+    'Unidentified Armed Group (Iran)':                                     'Grupo armado no identificado (Irán)',
+  };
+
+  function translateActor(name) {
+    return ACTOR_NAMES_ES[name] || name;
   }
 
   let activeActors = new Set(ACTOR_GROUPS);
@@ -68,12 +116,7 @@
     activeActors = new Set(activeActors);
   }
 
-  // ── Modo de vista ────────────────────────────────────────────────
-  let viewMode = 'actor'; // 'category' | 'actor'
   let onlyFatalities = false;
-
-  $: activeColors = viewMode === 'category' ? TYPE_COLORS : ACTOR_COLORS;
-  $: colorField   = viewMode === 'category' ? 'event_type' : 'actorGroup';
 
   // ── Fechas y play ────────────────────────────────────────────────
   let allDates = [];
@@ -148,20 +191,14 @@
   $: filteredEvents = events.filter(e => {
     if (e.event_date < allDates[dateLo] || e.event_date > allDates[dateHi]) return false;
     if (onlyFatalities && e.fatalities === 0) return false;
-    if (viewMode === 'category') return activeTypes.has(e.event_type);
-    return activeActors.has(e.actorGroup);
+    return activeActors.has(e.actorGroup) && activeTypes.has(e.event_type);
   });
 
   // ── Sidebar ──────────────────────────────────────────────────────
   let selectedEvent = null;
 
-  $: eventColor = selectedEvent
-    ? (viewMode === 'category' ? TYPE_COLORS[selectedEvent.event_type] : ACTOR_COLORS[selectedEvent.actorGroup])
-    : '#94a3b8';
-
-  $: eventLabel = selectedEvent
-    ? (viewMode === 'category' ? TYPE_LABELS_ES[selectedEvent.event_type] : ACTOR_LABELS[selectedEvent.actorGroup])
-    : '';
+  $: eventColor = selectedEvent ? ACTOR_COLORS[selectedEvent.actorGroup] : '#94a3b8';
+  $: eventLabel = selectedEvent ? ACTOR_LABELS[selectedEvent.actorGroup] : '';
 
   $: totalFatalities = filteredEvents.reduce((s, e) => s + e.fatalities, 0);
 </script>
@@ -169,50 +206,18 @@
 <div class="app">
   <header>
     <div class="header-left">
-      <h1>Monitor de la guerra en Oriente Medio</h1>
-      <span class="subtitle">ACLED Data · 28 feb – actualidad · {events.length} eventos registrados</span>
+      <h1>Monitor de la guerra de Irán</h1>
+      <span class="subtitle"><a href="https://acleddata.com/about-acled" target="_blank" rel="noreferrer">ACLED Data</a> · 28 feb – actualidad · {events.length} eventos registrados</span>
+      <span class="subtitle">Datos actualizados a diario</span>
     </div>
     <img src="./newtral.gif" alt="Newtral" class="logo" />
   </header>
 
   <div class="controls">
     <div class="filters">
-      <!-- Toggle de modo -->
-      <div class="mode-toggle">
-        <button
-          class="mode-btn"
-          class:active={viewMode === 'actor'}
-          on:click={() => viewMode = 'actor'}
-        >Actor</button>
-        <button
-          class="mode-btn"
-          class:active={viewMode === 'category'}
-          on:click={() => viewMode = 'category'}
-        >Categoría</button>
-        <button
-          class="mode-btn"
-          class:active={onlyFatalities}
-          on:click={() => onlyFatalities = !onlyFatalities}
-        >Eventos con bajas</button>
-      </div>
-
-      <div class="v-divider"></div>
-
-      <!-- Filtros según modo -->
-      {#if viewMode === 'category'}
-        {#each EVENT_TYPES as type}
-          <button
-            class="filter-btn"
-            class:active={activeTypes.has(type)}
-            style="--color: {TYPE_COLORS[type]}"
-            on:click={() => toggleType(type)}
-          >
-            <span class="dot"></span>
-            {TYPE_LABELS_ES[type]}
-          </button>
-        {/each}
-      {:else}
-        {#each ACTOR_GROUPS as group}
+      <!-- Fila 1: actores -->
+      <div class="filter-row">
+        {#each ACTOR_GROUPS_DISPLAY as group}
           <button
             class="filter-btn"
             class:active={activeActors.has(group)}
@@ -223,11 +228,34 @@
             {ACTOR_LABELS[group]}
           </button>
         {/each}
-      {/if}
+      </div>
+
+      <!-- Fila 2: categorías -->
+      <div class="filter-row">
+        <span class="filter-row-label">Categoría</span>
+        <div class="v-divider"></div>
+        {#each EVENT_TYPES as type}
+          <button
+            class="filter-btn filter-btn-neutral"
+            class:active={activeTypes.has(type)}
+            on:click={() => toggleType(type)}
+          >
+            <span class="checkbox">{activeTypes.has(type) ? '✓' : ''}</span>
+            {TYPE_LABELS_ES[type]}
+          </button>
+        {/each}
+      </div>
+
+      <!-- Fila 3: solo bajas -->
+      <div class="filter-row">
+        <button class="bajas-toggle" class:active={onlyFatalities} on:click={() => onlyFatalities = !onlyFatalities}>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          Solo bajas
+        </button>
+      </div>
     </div>
 
     {#if allDates.length > 0}
-      <div class="divider"></div>
       <div class="slider-group">
         <button class="play-btn" on:click={togglePlay} aria-label={playing ? 'Pausar' : 'Reproducir'}>
           {#if playing}
@@ -241,7 +269,10 @@
             </svg>
           {/if}
         </button>
-        <DateSlider dates={allDates} bind:lo={dateLo} bind:hi={dateHi} />
+        <div class="slider-wrap-outer">
+          <DateSlider dates={allDates} bind:lo={dateLo} bind:hi={dateHi} />
+          <p class="slider-hint">Arrastra para aislar eventos de diferentes días</p>
+        </div>
       </div>
     {/if}
   </div>
@@ -254,8 +285,8 @@
     {:else}
       <Map
         events={filteredEvents}
-        typeColors={activeColors}
-        {colorField}
+        typeColors={ACTOR_COLORS}
+        colorField="actorGroup"
         bind:selectedEvent
       />
     {/if}
@@ -278,18 +309,21 @@
         <div class="event-type" style="color: {eventColor}">
           {eventLabel}
         </div>
+        <div class="event-category" style="color: {eventColor}">
+          {TYPE_LABELS_ES[selectedEvent.event_type]}
+        </div>
         <h2>{selectedEvent.location}</h2>
-        <p class="meta">{selectedEvent.country} · {selectedEvent.admin1}</p>
-        <p class="date">{selectedEvent.event_date}</p>
+        <p class="meta">{selectedEvent.admin1}, {selectedEvent.country}</p>
+        <p class="date">{selectedEvent.event_date.split('-').reverse().join('/')}</p>
         {#if selectedEvent.fatalities > 0}
           <div class="fatalities">
             {selectedEvent.fatalities} {selectedEvent.fatalities === 1 ? 'baja' : 'bajas'}
           </div>
         {/if}
         <div class="actors">
-          <strong>Actor 1:</strong> {selectedEvent.actor1 || '—'}<br/>
+          <strong>Acción de:</strong> {translateActor(selectedEvent.actor1 || '—')}<br/>
           {#if selectedEvent.actor2}
-            <strong>Actor 2:</strong> {selectedEvent.actor2}
+            <strong>Sobre:</strong> {translateActor(selectedEvent.actor2)}
           {/if}
         </div>
         <p class="notes">{selectedEvent.notes}</p>
@@ -332,6 +366,16 @@
     color: #0f172a;
   }
 
+  .subtitle a {
+    color: #94a3b8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .subtitle a:hover {
+    color: #0f172a;
+  }
+
   .subtitle {
     font-size: 0.7rem;
     color: #94a3b8;
@@ -362,9 +406,22 @@
 
   .filters {
     display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .filter-row {
+    display: flex;
     align-items: center;
+    gap: 6px;
+  }
+
+  .filter-row-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    white-space: nowrap;
   }
 
   /* Toggle categoría/actor */
@@ -404,6 +461,47 @@
     flex-shrink: 0;
   }
 
+  .bajas-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: inherit;
+    color: #64748b;
+    padding: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .toggle-track {
+    width: 28px;
+    height: 16px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+
+  .bajas-toggle.active { color: #0f172a; }
+  .bajas-toggle.active .toggle-track { background: #01f3b3; }
+  .bajas-toggle.active .toggle-thumb { transform: translateX(12px); }
+
   .divider {
     width: 1px;
     height: 28px;
@@ -414,7 +512,20 @@
   .slider-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 22px;
+  }
+
+  .slider-wrap-outer {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .slider-hint {
+    margin: 0;
+    font-size: 0.6rem;
+    color: #cbd5e1;
+    text-align: center;
   }
 
   .play-btn {
@@ -467,6 +578,50 @@
   }
 
   .filter-btn.active .dot { opacity: 1; }
+
+  .filter-btn-neutral {
+    --color: #0f172a;
+    border-color: #e2e8f0;
+    background: #fff;
+    color: #94a3b8;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    letter-spacing: 0.01em;
+  }
+
+  .filter-btn-neutral:hover {
+    border-color: #cbd5e1;
+    color: #475569;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.09);
+  }
+
+  .filter-btn-neutral.active {
+    background: #fff;
+    border-color: #0f172a;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.1);
+  }
+
+  .checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: #fff;
+  }
+
+  .filter-btn-neutral.active .checkbox {
+    border-color: #0f172a;
+    background: #0f172a;
+    color: #fff;
+  }
 
   /* Mapa */
   .map-container {
@@ -566,7 +721,16 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .event-category {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: 6px;
+    color: #0f172a;
   }
 
   .sidebar h2 {
@@ -579,6 +743,15 @@
     margin: 0 0 2px;
     font-size: 0.75rem;
     color: #94a3b8;
+  }
+
+  .meta-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #cbd5e1;
+    margin: 0;
   }
 
   .date {
@@ -624,17 +797,24 @@
   @media (max-width: 640px) {
     .controls {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
       padding: 8px 12px;
     }
 
     .filters {
       width: 100%;
+      align-items: center;
     }
 
-    .filter-btn {
-      flex: 1 1 auto;
+    .filter-row {
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .slider-group {
+      width: 100%;
       justify-content: center;
     }
 
